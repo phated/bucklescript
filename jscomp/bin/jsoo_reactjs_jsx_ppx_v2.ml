@@ -309,14 +309,17 @@ module Js = struct
   external to_string : js_string t -> string = "caml_js_to_string"
 end
 
+let process pstr =
+  let mapper = jsxMapper () in
+  mapper.structure mapper pstr
+
 (* keep in sync with jscomp/core/jsoo_main.ml `let implementation` *)
 let rewrite code =
-  let mapper = jsxMapper () in
   Location.input_name := "//toplevel//";
   try
     let lexer = Lexing.from_string code in
     let pstr = Parse.implementation lexer in
-    let pstr = mapper.structure mapper pstr in
+    let pstr = process pstr in
     let buffer = Buffer.create 1000 in
     Pprintast.structure Format.str_formatter pstr;
     let ocaml_code = Format.flush_str_formatter () in
