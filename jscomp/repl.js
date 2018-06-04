@@ -9,6 +9,7 @@ var path = require('path')
 var customOcaml = path.join(__dirname, '../vendor/ocaml/bin');
 
 const justTest = process.argv.includes('--just-test')
+const skipTest = process.argv.includes('--skip-test')
 const skipPrepare = process.argv.includes('--skip-prepare') || justTest
 const skipBuild = process.argv.includes('--skip-build') || justTest
 
@@ -72,9 +73,7 @@ function prepare() {
 
     e(`ocamlc.opt -w -30-40 -no-check-prims -I bin bin/js_compiler.mli bin/js_compiler.ml -o jsc.byte`)
 
-    // e(`rm -rf  ${playground}/pre_load.js`)
-    // e(`cp ./pre_load.js ${playground}`)
-    // e(`cp ../lib/js/*.js ${playground}/stdlib`)
+    e(`cp ../lib/es6/*.js ${playground}/stdlib`)
 
     // Build JSX v2 PPX with jsoo
     try {
@@ -99,7 +98,7 @@ function build() {
             // `lazy`,
             `js`, `js_unsafe`, `js_re`, `js_array`, `js_null`, `js_undefined`, `js_internal`,
             `js_types`, `js_null_undefined`, `js_dict`, `js_exn`, `js_string`, `js_vector`,
-            `js_boolean`, `js_date`, `js_global`, `js_math`, `js_obj`, `js_int`,
+            `js_date`, `js_global`, `js_math`, `js_obj`, `js_int`,
             `js_result`, `js_list`, `js_typed_array`,
             `js_promise`, `js_option`, `js_float`, `js_json`,
             `arrayLabels`, `bytesLabels`, `complex`, `gc`, `genlex`, `listLabels`,
@@ -136,7 +135,7 @@ function build() {
             `belt_HashMapInt`,
             `belt_HashMapString`,
         ].map(x => `${x}.cmi:/static/cmis/${x}.cmi`).map(x => `--file ${x}`).join(` `)
-    e(`js_of_ocaml --disable share --toplevel +weak.js ./polyfill.js jsc.byte ${includes} ${cmi_files} -o ${playground}/bucklescript-compiler.js`)
+    e(`js_of_ocaml --disable share --pretty --wrap-with-fun=compiler --custom-header="export { compiler };" --toplevel +weak.js ./polyfill.js jsc.byte ${includes} ${cmi_files} -o ${playground}/compiler.js`)
 
     console.log(`🎉🎉 Compiler created!
 
@@ -147,7 +146,8 @@ function build() {
 function testCompiler() {
     console.log('[Now testing the compiler]')
     // it's side-effectful, and puts the "ocaml" object on global
-    require(`${playground}/bucklescript-compiler.js`)
+    require(`${playground}/compiler.js`)
+
 
     let result = ocaml.compile('let x = List.map ((+) 1) [1;2;3;4]\nlet y = List.hd x');
     try {
@@ -184,7 +184,6 @@ function testCompiler() {
 // The preparation step takes most of the time. Without it, this script takes ~15 seconds
 if (!skipPrepare) { prepare() }
 if (!skipBuild) { build() }
-
-testCompiler();
+if (!skipTest) { testCompiler() }
 
 //  note it is preferred to run ./release.sh && ./js.sh otherwise  amdjs is not really latest
