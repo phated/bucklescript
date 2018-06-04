@@ -48,7 +48,7 @@ function prepare() {
 
     e(`ocamlc.opt -w -30-40 -no-check-prims -I bin bin/js_compiler.mli bin/js_compiler.ml -o jsc.byte`)
 
-    e(`cp ../lib/js/*.js ${playground}/stdlib`)
+    e(`cp ../lib/es6/*.js ${playground}/stdlib`)
 
     // Build JSX v2 PPX with jsoo
     try {
@@ -119,7 +119,7 @@ var cmi_files =
         `belt_HashMapInt`,
         `belt_HashMapString`,
     ].map(x => `${x}.cmi:/static/cmis/${x}.cmi`).map(x => `--file ${x}`).join(` `)
-e(`js_of_ocaml --disable share --toplevel +weak.js ./polyfill.js jsc.byte ${includes} ${cmi_files} -o ${playground}/exports.js`)
+e(`js_of_ocaml --disable share --pretty --wrap-with-fun=compiler --custom-header="export { compiler };" --toplevel +weak.js ./polyfill.js jsc.byte ${includes} ${cmi_files} -o ${playground}/compiler.js`)
 
 
 
