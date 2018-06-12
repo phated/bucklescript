@@ -98,7 +98,7 @@ let implementation ~use_super_errors prefix impl str  : Js.Unsafe.obj =
       let buffer = Buffer.create 1000 in
       let () = Js_dump_program.pp_deps_program
                           ~output_prefix:"" (* does not matter here *)
-                          Es6
+                          Es6_global
                           (Lam_compile_main.compile ~filename:"" ""
                              !finalenv !types_signature lam)
                           (Ext_pp.from_buffer buffer) in
