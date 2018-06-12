@@ -65,6 +65,16 @@ let () =
   Clflags.unsafe_string := false;
   Clflags.record_event_when_debug := false
 
+let get_dep_set parser text =
+  let ast = parser (Lexing.from_string text) in
+  Depend.free_structure_names := Depend.StringSet.empty;
+  Depend.add_implementation Depend.StringSet.empty ast;
+  !Depend.free_structure_names
+
+let list_dependencies parser text =
+  let depSet = get_dep_set parser text in
+  Array.of_list (Depend.StringSet.elements depSet  |> List.map Js.string )
+
 let implementation ~use_super_errors prefix impl str  : Js.Unsafe.obj =
   let modulename = "Test" in
   (* let env = !Toploop.toplevel_env in *)
@@ -186,6 +196,11 @@ let make_compiler name impl =
                     Js.wrap_meth_callback
                       (fun _ code -> (shake_compile impl ~use_super_errors:true (Js.to_string code)));
                     "version", Js.Unsafe.inject (Js.string (Bs_version.version));
+                    "list_dependencies",
+                    inject @@
+                    Js.wrap_meth_callback
+                      (fun _ code ->
+                         (list_dependencies impl (Js.to_string code)));
                     "load_module",
                     inject @@
                     Js.wrap_meth_callback
